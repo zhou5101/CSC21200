@@ -136,32 +136,26 @@ bool deque::needs_realloc()
 void deque::push_front(int x)
 {
 	/* TODO: write me. */
-	/*modify the front_index, realloc when size == cap -> no enough buffer*/
-	if (needs_reallloc() || size() == cap) {
+	/*no enough buffer*/
+	if (needs_realloc()) {
 		int* newdata = new int[cap * 2];
-		if (front_index > 0) {
-			front_index = cap + front_index;
-			for (size_t i = front_index + cap * 2; i != next_back_index; i++) {
-				i %= cap * 2;
-				newdata[i] = data[i];
-		}
-		else {
-			for (size_t i = front_index + cap * 2; i != next_back_index; i++) {
-				i %= cap * 2;
-				newdata[i + 1] = data[i];
+		if (front_index > 0) front_index = cap + front_index;
+		for (size_t i = front_index + cap * 2; i != next_back_index; i++) {
+			i %= cap * 2;
+			newdata[i] = data[i];
 			}
-		}
 		delete[] data;
 		data = newdata;
 		cap *= 2;
 	}
-	data[--front_index] = x
+	data[(front_index-1)%cap] = x;
+	front_index = (front_index-1)%cap;
 }
 
 void deque::push_back(int x)
 {
 	/* TODO: write me. */
-	if (needs_reallloc()||size() == cap) {
+	if (needs_realloc()) {
 		int* newdata = new int[cap*2];
 		if (front_index > 0) front_index = cap + front_index;
 		cap *= 2;
@@ -173,14 +167,14 @@ void deque::push_back(int x)
 		data = newdata;
 	}
 	data[next_back_index++] = x;
-	
+
 }
 
 int deque::pop_front()
 {
 	assert(!empty());
 	/* TODO: write me. */
-
+	front_index = (front_index-1)%cap;
 	return 0; /* prevent compiler error. */
 }
 
@@ -188,7 +182,7 @@ int deque::pop_back()
 {
 	assert(!empty());
 	/* TODO: write me. */
-
+	next_back_index = (next_back_index-1)%cap;
 	return 0; /* prevent compiler error. */
 }
 
