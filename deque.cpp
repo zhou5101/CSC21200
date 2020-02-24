@@ -140,8 +140,7 @@ void deque::push_front(int x)
 	if (needs_realloc()) {
 		int* newdata = new int[cap * 2];
 		if (front_index > 0) front_index = cap + front_index;
-		for (size_t i = front_index + cap * 2; i != next_back_index; i++) {
-			i %= cap * 2;
+		for (size_t i = front_index; i != next_back_index; i++) {
 			newdata[i] = data[i];
 			}
 		delete[] data;
@@ -158,16 +157,14 @@ void deque::push_back(int x)
 	if (needs_realloc()) {
 		int* newdata = new int[cap*2];
 		if (front_index > 0) front_index = cap + front_index;
-		cap *= 2;
-		for (size_t i = front_index + cap; i != next_back_index; i++) {
-			i %= cap;
+		for (size_t i = front_index; i != next_back_index; i++) {
 			newdata[i] = data[i];
 		}
 		delete[] data;
 		data = newdata;
+		cap *= 2;
 	}
 	data[next_back_index++] = x;
-
 }
 
 int deque::pop_front()
