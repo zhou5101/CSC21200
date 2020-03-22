@@ -236,7 +236,7 @@
 <div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1"></a><span class="cf">while</span> (i &lt; s.length() - <span class="dv">4</span>) {</span>
 <span id="cb2-2"><a href="#cb2-2"></a>   <span class="dt">uint32_t</span> x = <span class="dv">0</span>;</span>
 <span id="cb2-3"><a href="#cb2-3"></a>   <span class="cf">for</span> (j=<span class="dv">0</span>; j&lt;<span class="dv">4</span>; j++) {</span>
-<span id="cb2-4"><a href="#cb2-4"></a>      x |= (<span class="dt">uint32_t</span>)s[i++] &lt;&lt; (<span class="dv">8</span>*i);</span>
+<span id="cb2-4"><a href="#cb2-4"></a>      x |= (<span class="dt">uint32_t</span>)s[i++] &lt;&lt; (<span class="dv">8</span>*j);</span>
 <span id="cb2-5"><a href="#cb2-5"></a>   }</span>
 <span id="cb2-6"><a href="#cb2-6"></a>}</span>
 <span id="cb2-7"><a href="#cb2-7"></a><span class="co">/* then take care of last block... */</span></span></code></pre></div>
