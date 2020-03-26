@@ -17,11 +17,12 @@ using std::setw;
 
 #define R32 (rand()*100003 + rand())
 #define R64 (((uint64_t)R32 << 32) + R32)
-#define TLEN ((size_t)(1 << this-> nBits))
+#define TLEN ((size_t)(1 << this-> rangebits)) /* size of hash table == 2^nBits */
 
 namespace csc212
 {
 	/* First we implement our hash family */
+    //Constructor for hash, inner class
 	hashTbl::hash::hash(unsigned rangebits, const uint32_t* a,
 					const uint64_t* alpha, const uint64_t* beta) {
 		this->rangebits = rangebits;
@@ -39,6 +40,7 @@ namespace csc212
 		/* only keep the low order bits of beta: */
 		this->beta &= ((uint64_t)-1)>>(64 - rangebits);
 	}
+    //Hash function
 	uint64_t hashTbl::hash::operator()(const string& x) const {
 		assert(x.length() <= 4*aLen);
 		/* TODO: write the hash function. */
@@ -47,10 +49,9 @@ namespace csc212
         for (size_t i = 0; i <x.length()/4 - 1; i++){
             sum += a[2*i]*s[2*i]+a[2*i+1]*s[2*i+1];
         }
-        one = sum % (1 << 64);
-        uint64_t index = (alpha*one+beta) % TLEN;
-        this->table[index].push_back(x);
-		return 0;
+        one = (sum << 64);
+        uint64_t index = ((alpha*one+beta) % TLEN);
+		return index;
 	}
 
 	//constructors:
@@ -67,8 +68,10 @@ namespace csc212
 		 * assignment operator! */
          this->table = new list<val_type>[TLEN];
          this-> h = H.h;
-         for(size_t i =0; i < TLEN; i++)
-             this->table[i] = H.table[i];
+         for(size_t i =0; i < TLEN; i++){
+             if (this->table.size()!=0)
+                 this->table[i].push_back(H.table[i]);
+         }
 	}
 
 	//destructor:
@@ -104,15 +107,17 @@ namespace csc212
 	{
 		/* TODO: write this */
 		//Remember to check for uniqueness before inserting.
-        if(search(x))
-           hash(x);
+        if(!search(x)){
+            table[hash(x)].push_back(x);
+        }
+        
 	}
 
 	void hashTbl::remove(val_type x)
 	{
 		/* TODO: write this */
          size_t i;
-        for(i = 0; i<TLEN; i++)
+        for(i = 0; i< TLEN; i++)
             if (find(table[i].begin(),table[i].end(),x) != table[i].end())
                 table[i].remove(x);
 	}
