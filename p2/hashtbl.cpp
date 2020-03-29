@@ -42,15 +42,18 @@ namespace csc212
 	uint64_t hashTbl::hash::operator()(const string& x) const {
 		assert(x.length() <= 4*aLen);
 		/* TODO: write the hash function. */
-		//while (x.length()%4 != 0)
-			//x.push_back(0);
-		const uint32_t* D = reinterpret_cast<const uint32_t*>(x.c_str());
-		uint32_t sum=0;
-		uint64_t index=0;
-		for (size_t i = 0; i < (x.length() / 4); i++) {
-			sum += a[2*i] * D[2*i] + a[2*i + 1] * D[2*i + 1];
+		string c = x;
+		while (c.length()%4 != 0)
+			c.push_back(0);
+		const uint32_t* D = reinterpret_cast<const uint32_t*>(c.c_str());
+		uint32_t left = 0, right = 0;
+		uint64_t index = 0, product = 0;
+		for (size_t i = 0; i < ((c.length() / 4)-1)/2; i++) {
+			left += a[2*i] * D[2*i];
+			right += a[2*i + 1] * D[2*i + 1];
 		}
-		index = (alpha * sum + beta) >> (64-rangebits);
+		product = left * right;
+		index = (alpha * product + beta) >> (64-rangebits);
 		//size_t index = product;
 		return index;
 	}
@@ -69,10 +72,14 @@ namespace csc212
 		 * assignment operator! */
 		this->table = new list<val_type>[TLEN];
 		for (size_t i = 0; i < TLEN; i++) {
-			if (this->table[i].size() != 0)
-				this->table[i] = H.table[i];
+				this->table[i]=H.table[i];
 		}
-		this->h = H.h;
+		this->nBits = H.nBits;
+		this->h.alpha = (H.h).alpha;
+		this->h.beta = (H.h).beta;
+		this->h.rangebits = (H.h).rangebits;
+		for (size_t i = 0; i < this->h.aLen; i++)
+			this->h.a[i] = (H.h).a[i];
 	}
 
 	//destructor:
@@ -89,6 +96,7 @@ namespace csc212
 		/* TODO: write this */
 		swap(this->table, H.table);
 		this->h = H.h;
+		this->nBits = H.nBits;
 		return *this;
 	}
 
