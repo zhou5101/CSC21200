@@ -43,12 +43,12 @@ namespace csc212
 		assert(x.length() <= 4*aLen);
 		/* TODO: write the hash function. */
 		string c = x;
-		while (c.length()%4 != 0)
+		while (c.length()%8 != 0)
 			c.push_back(0);
 		const uint32_t* D = reinterpret_cast<const uint32_t*>(c.c_str());
 		uint32_t left = 0, right = 0;
 		uint64_t index = 0, product = 0;
-		for (size_t i = 0; i < ((c.length() / 4)-1)/2; i++) {
+		for (size_t i = 0; i <= ((c.length() / 8)-1); i++) {
 			left += a[2*i] * D[2*i];
 			right += a[2*i + 1] * D[2*i + 1];
 		}
