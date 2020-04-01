@@ -45,16 +45,22 @@ namespace csc212
 		string c = x;
 		while (c.length()%8 != 0)
 			c.push_back(0);
-		const uint32_t* D = reinterpret_cast<const uint32_t*>(c.c_str());
-		uint32_t left = 0, right = 0;
+
+		const uint32_t* s = reinterpret_cast<const uint32_t*>(c.c_str());
+
+		uint64_t left = 0, right = 0;
 		uint64_t index = 0, product = 0;
-		for (size_t i = 0; i <= ((c.length() / 8)-1); i++) {
-			left += a[2*i] * D[2*i];
-			right += a[2*i + 1] * D[2*i + 1];
+
+		size_t bound = c.length()/8;
+
+		for (size_t i = 0; i < bound; i++) {
+			left = a[2*i]+s[2*i];
+			right = a[2*i + 1] + s[2*i + 1];
+			product += left * right;
 		}
-		product = left * right;
+
 		index = (alpha * product + beta) >> (64-rangebits);
-		//size_t index = product;
+
 		return index;
 	}
 
@@ -65,21 +71,19 @@ namespace csc212
 	{
 		this->table = new list<val_type>[TLEN];
 	}
+
 	hashTbl::hashTbl(const hashTbl& H)
 	{
 		/* TODO: write this */
 		/* NOTE: the underlying linked list class has a working
 		 * assignment operator! */
+		this->nBits = H.nBits;
+		this->h = H.h;
 		this->table = new list<val_type>[TLEN];
 		for (size_t i = 0; i < TLEN; i++) {
-				this->table[i]=H.table[i];
+				this->table[i] = H.table[i];
 		}
-		this->nBits = H.nBits;
-		this->h.alpha = (H.h).alpha;
-		this->h.beta = (H.h).beta;
-		this->h.rangebits = (H.h).rangebits;
-		for (size_t i = 0; i < this->h.aLen; i++)
-			this->h.a[i] = (H.h).a[i];
+
 	}
 
 	//destructor:
@@ -94,9 +98,9 @@ namespace csc212
 	hashTbl& hashTbl::operator=(hashTbl H)
 	{
 		/* TODO: write this */
-		swap(this->table, H.table);
-		this->h = H.h;
 		this->nBits = H.nBits;
+		this->h = H.h;
+		swap(this->table, H.table);
 		return *this;
 	}
 
@@ -117,15 +121,11 @@ namespace csc212
 	{
 		/* TODO: write this */
 		//Remember to check for uniqueness before inserting.
-		if (isEmpty()) {
-			table[h(x)].push_back(x);
-		}
-		else
 			if (!search(x))
 			{
-				table[h(x)].push_back(x);
+				table[h(x)].push_front(x);
 			}
-	}
+		}
 
 	void hashTbl::remove(val_type x)
 	{
@@ -145,16 +145,13 @@ namespace csc212
 	{
 		/* TODO: write this */
 		for (size_t i=0; i < TLEN; i++)
-			if (table[i].size() != 0)
-				return false;
+			if (table[i].size() != 0) return false;
 		return true; // just so it compiles...
 	}
 
 	bool hashTbl::search(val_type x) const
 	{
 		/* TODO: write this */
-		if (isEmpty())
-			return false;
 		for (size_t i=0; i < TLEN; i++)
 			if (table[i].size() != 0)
 				if(find(table[i].begin(), table[i].end(),x)!=table[i].end())
@@ -194,10 +191,8 @@ namespace csc212
 	{
 		/* TODO: write this */
 		size_t i, max = 0;
-		if (isEmpty())
-			return max;
 		for (i = 0; i < TLEN; i++) {
-			if (table[i].size() > 0)
+			if (table[i].size() > max)
 				max = table[i].size();
 		}
 		return max; // just so it compiles...

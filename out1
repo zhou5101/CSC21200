@@ -1,0 +1,28 @@
+=======> push_back (check.cpp, line 41)
+14 158 30 
+=======> push_front (check.cpp, line 48)
+222 152 146 
+=======> pop_back (check.cpp, line 55)
+0 1 2 3 
+=======> pop_front (check.cpp, line 63)
+4 5 6 7 
+=======> push_{back,front} (check.cpp, line 71)
+126 2 157 231 73 43 211 93 39 83 32 239 50 220 51 207 168 9 34 174 
+=======> pop_{back,front} (check.cpp, line 79)
+43 211 93 39 83 32 239 50 220 51 
+=======> simple stuff (check.cpp, line 85)
+back: 51
+front: 43
+size: 10
+=======> copy constructor1 (check.cpp, line 90)
+0 1 2 3 4 5 6 7 
+=======> operator= (check.cpp, line 95)
+5 6 7 77 33 58 91 55 
+=======> empty (check.cpp, line 104)
+1 2 3 4 5 6 
+2 3 4 5 
+3 4 
+
+=======> clear (check.cpp, line 114)
+145 219 85 249 72 0 1 2 
+
