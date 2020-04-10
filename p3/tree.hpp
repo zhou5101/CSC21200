@@ -13,7 +13,7 @@ struct node {
 	node<K>* left;
 	node<K>* right;
 	node(K d=K(), node* l=NULL, node* r=NULL) : data(d),left(l),right(r) {} //node<K> constructor
-}; // a 
+}; 
 
 template <typename K>
 class tree {
@@ -71,15 +71,61 @@ private:
 TK void insert(node<K>*& n, K x)
 {
 	/* TODO: write me */
+	if (n == NULL) {
+		n = new node<K> (x);
+		return;
+	}
+	else if (x < n->data) {
+		insert(n->left, x);
+	}
+	else if (x > n->data) {
+		insert(n->right, x);
+	}
 }
 TK bool search(const node<K>* const& n, K x)
 {
 	/* TODO: write me */
-	return false; /* avoid compilation errors/warnings */
+	if (n == NULL)
+		return false;
+	else if (x < n->data)
+		search(n->left, x);
+	else if (x > n->data)
+		search(n->right, x);
+	else
+		return true; /* avoid compilation errors/warnings */
 }
 TK void remove(node<K>*& n, K x)
 {
 	/* TODO: write me */
+	if (n == NULL) 
+		return;
+	else if (n->data < x)
+		remove(n->right, x);
+	else if (n->data > x)
+		remove(n->left, x);
+	else {
+		if (n->left == NULL && n->right == NULL) {
+			delete n;
+			n = NULL;
+		}
+		else if (n->left == NULL) {
+			n->data = n->right->data;
+			delete n->right;
+			n->right = NULL;
+		}
+		else if (n->right == NULL) {
+			n->data = n->left->data;
+			delete n->left;
+			n->left = NULL;
+		}
+		else {
+			node<K>* temp = n->right;
+			while (temp->left)
+				temp = n->left;
+			n->data = temp->data;
+			remove(temp, temp->data);
+		}
+	}
 }
 
 /* the tree's member functions will just hand off to those acting on
@@ -113,30 +159,54 @@ using c_nodeProcFunc = void (*)(const node<K>* const& n, void* pParams);
 TK void preorder(node<K>*& n, nodeProcFunc<K> f, void* pParams)
 {
 	/* TODO: write me */
+	if (n == NULL) return;
+	f(n, pParams);
+	preorder(n->left, f, pParams);
+	preorder(n->right, f, pParams);
 }
 TK void inorder(node<K>*& n, nodeProcFunc<K> f, void* pParams)
 {
 	/* TODO: write me */
+	if (n == NULL) return;
+	inorder(n->left, f, pParams);
+	f(n, pParams);
+	inorder(n->right, f, pParams);
 }
 TK void postorder(node<K>*& n, nodeProcFunc<K> f, void* pParams)
 {
 	/* TODO: write me */
+	if (n == NULL) return;
+	postorder(n->left, f, pParams);
+	postorder(n->right, f, pParams);
+	f(n, pParams);
 }
 /* * * * * * * * * * traversal functions (const) * * * * * * * * * */
 TK void preorder(const node<K>* const& n, c_nodeProcFunc<K> f, void* pParams)
 {
 	/* TODO: write me */
 	/* NOTE: text of this function should be the same as the non-const */
+	if (n == NULL) return;
+	f(n, pParams);
+	preorder(n->left, f, pParams);
+	preorder(n->right, f, pParams);
 }
 TK void inorder(const node<K>* const& n, c_nodeProcFunc<K> f, void* pParams)
 {
 	/* TODO: write me */
 	/* NOTE: text of this function should be the same as the non-const */
+	if (n == NULL) return;
+	inorder(n->left, f, pParams);
+	f(n, pParams);
+	inorder(n->right, f, pParams);
 }
 TK void postorder(const node<K>* const& n, c_nodeProcFunc<K> f, void* pParams)
 {
 	/* TODO: write me */
 	/* NOTE: text of this function should be the same as the non-const */
+	if (n == NULL) return;
+	postorder(n->left, f, pParams);
+	postorder(n->right, f, pParams);
+	f(n, pParams);
 }
 
 
@@ -144,11 +214,23 @@ TK void postorder(const node<K>* const& n, c_nodeProcFunc<K> f, void* pParams)
 TK tree<K>::~tree()
 {
 	/* TODO: write me */
+	::deleteTree(this->root);
 }
+TK void deleteTree(node<K>*& n) {
+	if (n == NULL) return;
+	deleteTree(n->left);
+	deleteTree(n->right);
+	delete n;
+	n = NULL;
+}
+
+
 TK void tree<K>::clear()
 {
 	/* TODO: write me */
 	/* NOTE: can you do this via a traversal? */
+	node<K>* temp = this->root;
+	this->root = NULL;
 }
 
 
@@ -165,12 +247,28 @@ TK tree<K>::tree(const tree<K>& T)
 	 * TK node<K>* copySubtree(const node<K>* const& s);
 	 * and then use it to set this->root...
 	 * */
+	T->root;
+	this->root;
+	::copySubtree(T->root, this->root)
 }
+TK void copySubtree(const node<K>* const& n, node<K>*& a) {
+	if (n == NULL)
+		return;
+	insert(a, n->data);
+	copySubtree(n->left, a->left);
+	copySubtree(n->right, a->right);
+}
+
+
+
 TK tree<K>& tree<K>::operator=(tree<K> T)
 {
 	/* TODO: write me */
 	/* NOTE: the plan is to let the copy constructor do the real work
 	 * and we'll just steal it here. */
+	node<K>* temp = this->root;
+	this->root = T.root;
+	T.root = temp;
 	return *this;
 }
 
@@ -183,32 +281,80 @@ TK size_t tree<K>::size() const
 	 * Or perhaps solve this via a traversal + a small function that
 	 * is of type c_nodeProcFunc...
 	 * */
-	return 0; /* avoid compiler errors/warnings */
+	size_t num = 0;
+	::size(this->root, num); /* avoid compiler errors/warnings */
+	return num;
 }
+TK void size(const node<K>* const& n, size_t num& s) {
+	if (n == NULL)
+		return;
+	else
+		s++;
+	size(n->left, s);
+	size(n->right, s);
+}
+
+
 TK size_t tree<K>::leaves() const
 {
 	/* TODO: write me.  See remarks above for size */
-	return 0; /* avoid compiler errors/warnings */
+	size_t l = 0;
+	::leafNode(this->root,l); /* avoid compiler errors/warnings */
+	return l;
 }
+TK void leafNode(const node<K>* const& n, size_t& l) {
+	if (n == NULL)
+		return;
+	else
+		if(n->left==NULL && n->right ==NULL)
+			l++;
+	leafNode(n->left, s);
+	leafNode(n->right, s);
+}
+
+
 TK size_t tree<K>::height() const
 {
 	/* TODO: write me.  Maybe write function like this to help:
 	 * TK size_t height(const node<K>* const& n);
 	 * NOTE: we use the convention that the empty tree has height -1.
 	 * */
-	return 0; /* avoid compiler errors/warnings */
+	size_t h = 0, max = 0;
+	if (this->root == NULL)
+		return -1;
+	::height(this->root, &h); /* avoid compiler errors/warnings */
+	return h;
 }
+TK void height(const node<K>* const& n, size_t& h, size_t& max) {
+	if (n == NULL) {
+		if (max < h)
+			max = h;
+		h--;
+		return;
+	}
+	height(n->left, ++h);
+
+	height(n->right, ++h);
+}
+
 TK K tree<K>::min() const
 {
 	assert(this->root != NULL);
 	/* TODO: write me. */
-	return K(); /* avoid compiler errors/warnings */
+	node<K>* temp = this->root;
+	while (temp->left)
+		temp = temp->left;
+	return temp->data; /* avoid compiler errors/warnings */
 }
+
 TK K tree<K>::max() const
 {
 	assert(this->root != NULL);
 	/* TODO: write me. */
-	return K(); /* avoid compiler errors/warnings */
+	node<K>* temp = this->root;
+	while (temp->right)
+		temp = temp->right;
+	return temp->data; /* avoid compiler errors/warnings */
 }
 
 /* expose constant pointer to root node, which enables interesting
