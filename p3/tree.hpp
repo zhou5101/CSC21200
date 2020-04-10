@@ -13,7 +13,7 @@ struct node {
 	node<K>* left;
 	node<K>* right;
 	node(K d=K(), node* l=NULL, node* r=NULL) : data(d),left(l),right(r) {} //node<K> constructor
-}; 
+};
 
 template <typename K>
 class tree {
@@ -82,6 +82,7 @@ TK void insert(node<K>*& n, K x)
 		insert(n->right, x);
 	}
 }
+
 TK bool search(const node<K>* const& n, K x)
 {
 	/* TODO: write me */
@@ -91,13 +92,15 @@ TK bool search(const node<K>* const& n, K x)
 		search(n->left, x);
 	else if (x > n->data)
 		search(n->right, x);
-	else
-		return true; /* avoid compilation errors/warnings */
+	else if (n->data == x)
+		return true;
+	return false; /* avoid compilation errors/warnings */
 }
+
 TK void remove(node<K>*& n, K x)
 {
 	/* TODO: write me */
-	if (n == NULL) 
+	if (n == NULL)
 		return;
 	else if (n->data < x)
 		remove(n->right, x);
@@ -211,11 +214,6 @@ TK void postorder(const node<K>* const& n, c_nodeProcFunc<K> f, void* pParams)
 
 
 /* * * * * * * * * * clear(), destructor * * * * * * * * * */
-TK tree<K>::~tree()
-{
-	/* TODO: write me */
-	::deleteTree(this->root);
-}
 TK void deleteTree(node<K>*& n) {
 	if (n == NULL) return;
 	deleteTree(n->left);
@@ -223,6 +221,12 @@ TK void deleteTree(node<K>*& n) {
 	delete n;
 	n = NULL;
 }
+TK tree<K>::~tree()
+{
+	/* TODO: write me */
+	::deleteTree(this->root);
+}
+
 
 
 TK void tree<K>::clear()
@@ -233,12 +237,20 @@ TK void tree<K>::clear()
 	this->root = NULL;
 }
 
-
 /* * * * * * * * * * constructors, assignment * * * * * * * * * */
 /* default constructor: make an empty tree: */
 TK tree<K>::tree()
 {
 	this->root = NULL;
+}
+
+
+TK void copySubtree(node<K>*const& n, node<K>*& a) {
+	if (n == NULL)
+		return;
+	insert(a, n->data);
+	copySubtree(n->left, a->left);
+	copySubtree(n->right, a->right);
 }
 TK tree<K>::tree(const tree<K>& T)
 {
@@ -247,19 +259,8 @@ TK tree<K>::tree(const tree<K>& T)
 	 * TK node<K>* copySubtree(const node<K>* const& s);
 	 * and then use it to set this->root...
 	 * */
-	T->root;
-	this->root;
-	::copySubtree(T->root, this->root)
+	::copySubtree(T.root, this->root);
 }
-TK void copySubtree(const node<K>* const& n, node<K>*& a) {
-	if (n == NULL)
-		return;
-	insert(a, n->data);
-	copySubtree(n->left, a->left);
-	copySubtree(n->right, a->right);
-}
-
-
 
 TK tree<K>& tree<K>::operator=(tree<K> T)
 {
@@ -273,6 +274,14 @@ TK tree<K>& tree<K>::operator=(tree<K> T)
 }
 
 /* * *  * * * * * * statistics * * * * * * * * */
+TK void size(const node<K>* const& n, size_t& s) {
+	if (n == NULL)
+		return;
+	else
+		s++;
+	size(n->left, s);
+	size(n->right, s);
+}
 TK size_t tree<K>::size() const
 {
 	/* TODO: write me */
@@ -285,16 +294,18 @@ TK size_t tree<K>::size() const
 	::size(this->root, num); /* avoid compiler errors/warnings */
 	return num;
 }
-TK void size(const node<K>* const& n, size_t num& s) {
+
+
+
+TK void leafNode(const node<K>* const& n, size_t& l) {
 	if (n == NULL)
 		return;
 	else
-		s++;
-	size(n->left, s);
-	size(n->right, s);
+		if(n->left==NULL && n->right ==NULL)
+			l++;
+	leafNode(n->left, l);
+	leafNode(n->right, l);
 }
-
-
 TK size_t tree<K>::leaves() const
 {
 	/* TODO: write me.  See remarks above for size */
@@ -302,17 +313,19 @@ TK size_t tree<K>::leaves() const
 	::leafNode(this->root,l); /* avoid compiler errors/warnings */
 	return l;
 }
-TK void leafNode(const node<K>* const& n, size_t& l) {
-	if (n == NULL)
+
+
+
+TK void height(const node<K>* const& n, size_t& h, size_t& max) {
+	if (n == NULL) {
+		if (max < h)
+			max = h;
+		h--;
 		return;
-	else
-		if(n->left==NULL && n->right ==NULL)
-			l++;
-	leafNode(n->left, s);
-	leafNode(n->right, s);
+	}
+	height(n->left, ++h, max);
+	height(n->right, ++h, max);
 }
-
-
 TK size_t tree<K>::height() const
 {
 	/* TODO: write me.  Maybe write function like this to help:
@@ -322,20 +335,12 @@ TK size_t tree<K>::height() const
 	size_t h = 0, max = 0;
 	if (this->root == NULL)
 		return -1;
-	::height(this->root, &h); /* avoid compiler errors/warnings */
+	::height(this->root, h, max); /* avoid compiler errors/warnings */
 	return h;
 }
-TK void height(const node<K>* const& n, size_t& h, size_t& max) {
-	if (n == NULL) {
-		if (max < h)
-			max = h;
-		h--;
-		return;
-	}
-	height(n->left, ++h);
 
-	height(n->right, ++h);
-}
+
+
 
 TK K tree<K>::min() const
 {
