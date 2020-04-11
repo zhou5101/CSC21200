@@ -102,31 +102,31 @@ TK void remove(node<K>*& n, K x)
 	/* TODO: write me */
 	if (n == NULL)
 		return;
-	else if (n->data < x)
-		remove(n->right, x);
-	else if (n->data > x)
+	else if (x < n->data)
 		remove(n->left, x);
+	else if (x > n->data)
+		remove(n->right, x);
 	else {
 		if (n->left == NULL && n->right == NULL) {
 			delete n;
 			n = NULL;
 		}
 		else if (n->left == NULL) {
-			n->data = n->right->data;
-			delete n->right;
-			n->right = NULL;
+			node<K>* temp = n;
+			n = n->right;
+			delete temp;
 		}
 		else if (n->right == NULL) {
-			n->data = n->left->data;
-			delete n->left;
-			n->left = NULL;
+			node<K>* temp = n;
+			n = n->left;
+			delete temp;
 		}
 		else {
-			node<K>* temp = n->right;
-			while (temp->left)
-				temp = n->left;
-			n->data = temp->data;
-			remove(temp, temp->data);
+			node<K>* v = n->right;
+			while (v->left)
+				v = v->left;
+			n->data = v->data;
+			remove(n->right, v->data);
 		}
 	}
 }
@@ -316,15 +316,18 @@ TK size_t tree<K>::leaves() const
 
 
 
-TK void height(const node<K>* const& n, size_t& h, size_t& max) {
+TK size_t height(const node<K>* const& n) {
 	if (n == NULL) {
-		if (max < h)
-			max = h;
-		h--;
-		return;
+		return 0;
 	}
-	height(n->left, ++h, max);
-	height(n->right, ++h, max);
+	else{
+	size_t l = height(n->left);
+	size_t r = height(n->right);
+	if(l>r)
+		return (l+1);
+	else
+		return (r+1);
+	}
 }
 TK size_t tree<K>::height() const
 {
@@ -332,11 +335,8 @@ TK size_t tree<K>::height() const
 	 * TK size_t height(const node<K>* const& n);
 	 * NOTE: we use the convention that the empty tree has height -1.
 	 * */
-	size_t h = 0, max = 0;
-	if (this->root == NULL)
-		return -1;
-	::height(this->root, h, max); /* avoid compiler errors/warnings */
-	return h;
+	return ::height(this->root)-1; /* avoid compiler errors/warnings */
+
 }
 
 
