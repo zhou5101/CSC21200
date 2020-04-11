@@ -94,7 +94,7 @@ TK bool search(const node<K>* const& n, K x)
 		search(n->right, x);
 	else if (n->data == x)
 		return true;
-	return false; /* avoid compilation errors/warnings */
+/* avoid compilation errors/warnings */
 }
 
 TK void remove(node<K>*& n, K x)
@@ -248,7 +248,7 @@ TK tree<K>::tree()
 TK void copySubtree(node<K>*const& n, node<K>*& a) {
 	if (n == NULL)
 		return;
-	insert(a, n->data);
+	a = new node<K> (n->data);
 	copySubtree(n->left, a->left);
 	copySubtree(n->right, a->right);
 }
