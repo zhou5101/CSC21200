@@ -12,8 +12,8 @@ using std::vector;
 using std::deque;
 #include <map>
 using std::map;
-#include <string>
-using std::string;
+#include <set>
+using std::set;
 #include<iostream>;
 using std::cout;
 using std::find;
@@ -37,7 +37,7 @@ void initBlocks();
 // #define FULLSCREEN_FLAG 0
 
 /* NOTE: ssq == "small square", lsq == "large square" */
-enum bType {hor,ver,ssq,lsq};
+enum bType {em,hor,ver,ssq,lsq};
 struct block {
 	SDL_Rect R; /* screen coords + dimensions */
 	bType type; /* shape + orientation */
@@ -227,16 +227,14 @@ int xcoordinate(block b)//convert bframe.y to column of 2d array
 	int y = (b.R.y - bframe.y) / (bframe.w / 4);
 	return y;
 }
+struct coordinate {
+	int x, y;
+	coordinate(int r, int c) :x(r), y(c) {} //row and col
+};
+enum direction { up, down, left, right, up2, down2, left2, right2};
 
-//store initial congfiguration as 2d array
-// 0  9 9  1
-// 0  9 9  1
-//-1  4 4 -1
-// 2  5 6  3
-// 2  7 8  3
-void readGraph(graph& g)
-{
-	for (size_t i = 0; i < 10; i++) {
+void initialG(graph& g) { //read graph
+	for (int i = 0; i < 10; i++) {
 		int r = xcoordinate(B[i]);
 		int c = ycoordinate(B[i]);
 		if (g[r][c] == -1) {
@@ -258,127 +256,190 @@ void readGraph(graph& g)
 	}
 }
 
-int move = 161;//distance of one grid;
-
-//Every possible direction to move block
-enum direction { u = -1, d = 1, l = -1, r = 1, u2 = -2, d2 = 2, l2 = -2, r2 = 2 };
-vector<direction> cdir{ l, r, l2, r2 };
-vector<direction> rdir{ u, d, u2, d2 };
-struct coordinate {
-	int r; //row
-	int c; //column
-	coordinate(int a, int b):r(a),c(b) {}
-};
-
-bool goal(const graph& g) //check lsq's position
-{
-	return (g[4][1] == 1 && g[4][2] == 1);
-}
-
-void printGraph(graph& g) {
-	for (size_t i = 0; i < 5; i++) {
-		for (size_t j = 0; j < 4; j++) {
+void printG(const graph& g) { //print graph
+	for (int i = 0; i < 5; i++) {
+		for (int j = 0; j < 4; j++) {
 			printf("[%i]", g[i][j]);
 		}
 		printf("\n");
 	}
 }
-//convert the graph into string for quick comparison.
-string encode(const graph& g/*, const map<int, string>& dic*/) {
-	string a{};
-	for (size_t i = 0; i < 5; i++) {
-		for (size_t j = 0; j < 4; j++) {
-			//a += dic.find(g[i][j])->second;
-			if (g[i][j] == -1) a += " ";
-			else a+=std::to_string(g[i][j]);
-		}
-	}
-	return a;
-}
-//convert the string back to graph.
-int decode(const char& x) {
-	if (x == ' ') return (x-33);
-	return x-48;
-}
-void edecode(graph& g, const string& s) {
-	int x = 0;
-	for (int i = 0; i < 5; i++) {
-		for (int j = 0; j < 4; j++) {
-			g[i][j] = decode(s[x++]);
-		}
-	}
-}
 
-//check neigbhors of empty blocks
-void neighbor(const graph& g, vector<int>& n) {
-	n.clear();
-	for (int i = 0; i < 5; i++) {
-		for (int j = 0; j < 4; j++) {
-			if (g[i][j] == -1) {
-				if (i - 1 >= 0) 
-					n.push_back(g[i - 1][j]);
-				if (i + 1 <= 4) 
-					n.push_back(g[i + 1][j]);
-				if (j - 1 >= 0) 
-					n.push_back(g[i][j - 1]);
-				if (j + 1 <= 3) 
-					n.push_back(g[i][j + 1]);
-			}
-		}
-	}
+bool goal(const graph& g) { //check the state of the solution
+	return (g[4][1] == 9 && g[4][2] == 9);
 }
-
-void mapGraph(const graph& g, map<int, vector<coordinate>>& c) {
+void mapG(const graph& g, map<int, vector<coordinate>>& c) {
+	c.clear();
 	for (int i = 0; i < 5; i++)
 		for (int j = 0; j < 4; j++)
 			c[g[i][j]].push_back(coordinate(i, j));
 }
 
-//Move Block to all possible direction base on neighbors
-void moveBlock(deque<string>& q, const graph& g, map<string, string>& p, vector<int>& n, map<int, vector<coordinate>>& c) {
-	graph cp;
-	for (auto& i : n) {
-		vector<coordinate> ptrc= c.find(i)->second;
-		cp = g;
-		for (auto& j : ptrc) {
-			for (auto& r : rdir) {//check valid row move
-				int a = j.r + r;
-				if (a < 5 && a>-1 && cp[a][j.c] != -1) //valid -> update map, graph, encode graph, push to q, insert pair to p
-					return;
-			}
-			for (auto& c : cdir) {//check valid col move
-				int b = j.c + c;
-				if (b < 4 && b>-1 && cp[j.r][b] != -1)
-
+void neighbor(const graph& g, set<int>& n) {
+	n.clear();
+	for (int i = 0; i < 5; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (g[i][j] == -1) {
+				if (i - 1 >= 0)
+					if (g[i - 1][j]>-1)
+						n.insert(g[i - 1][j]);
+				if (i + 1 <= 4)
+					if (g[i + 1][j] > -1)
+						n.insert(g[i + 1][j]);
+				if (j - 1 >= 0)
+					if (g[i][j - 1] > -1)
+						n.insert(g[i][j - 1]);
+				if (j + 1 <= 3)
+					if (g[i][j + 1] > -1)
+						n.insert(g[i][j + 1]);
 			}
 		}
+	}
+}
+
+void move(const graph& g, int n, direction dir, map<int, vector<coordinate>>& c, map<graph, graph>& p, int& counter, deque<graph>& q) {
+	int row = 0, col = 0;
+	graph cp = g;
+	switch (dir) {
+	case up:
+		row = -1;
+		break;
+	case down:
+		row = 1;
+		break;
+	case left:
+		col = -1;
+		break;
+	case right:
+		col = 1;
+		break;
+	case up2:
+		row = -2;
+		break;
+	case down2:
+		row = 2;
+		break;
+	case left2:
+		col = -2;
+		break;
+	case right2:
+		col = 2;
+		break;
+	default:
+		return;
+		break;
+	}
+
+	if (c[n].size() == 1) {
+		auto i = c[n].begin();
+		if ((i->x + row) > -1 && (i->x + row) < 5 && (i->y + col) > -1 && (i->y + col) < 4)
+			if (cp[i->x + row][i->y + col] == -1) {
+				cp[i->x][i->y] = -1;
+				cp[i->x + row][i->y + col] = n;
+			}
+		
+		if (find(q.begin(), q.end(), cp) == q.end()) {
+			q.push_back(cp);
+			p.insert({ cp,g });
+		}
+	}
+	else if (c[n].size() == 2) {
+		auto i = c[n].begin();
+		if ((i->x + row) >= 0 && (i->x + row) < 5 && (i->y + col) >= 0 && (i->y + col) < 4)
+			if (cp[i->x + row][i->y + col] == -1 || (cp[i->x + row][i->y + col] == n)) {
+				i++;
+				if ((i->x + row) >= 0 && (i->x + row) < 5 && (i->y + col) >= 0 && (i->y + col) < 4)
+				{
+					if (cp[i->x + row][i->y + col] == -1 || (cp[i->x + row][i->y + col] == n)) {
+						for (auto k = c[n].begin(); k != c[n].end(); k++) {
+							cp[k->x][k->y] = -1;
+						}
+						for (auto k = c[n].begin(); k != c[n].end(); k++) {
+							cp[k->x + row][k->y + col] = n;
+						}
+						
+						if (find(q.begin(), q.end(), cp) == q.end()) {
+							q.push_back(cp);
+							p.insert({ cp,g });
+						}
+					}
+				}
+			}
+
+	}
+	else if (c[n].size()) {
+		auto i = c[n].begin();
+		if ((i->x + row) > -1 && (i->x + row) < 5 && (i->y + col) > -1 && (i->y + col) < 4)
+			if (cp[i->x + row][i->y + col] == -1 || (cp[i->x + row][i->y + col] == n)) {
+				i++;
+				if ((i->x + row) > -1 && (i->x + row) < 5 && (i->y + col) > -1 && (i->y + col) < 4)
+				{
+					if (cp[i->x + row][i->y + col] == -1 || (cp[i->x + row][i->y + col] == n)) 
+					{
+						i++;
+						if ((i->x + row) > -1 && (i->x + row) < 5 && (i->y + col) > -1 && (i->y + col) < 4)
+						{
+							if (cp[i->x + row][i->y + col] == -1 || (cp[i->x + row][i->y + col] == n)) {
+								i++;
+								if ((i->x + row) > -1 && (i->x + row) < 5 && (i->y + col) > -1 && (i->y + col) < 4)
+								{
+									if (cp[i->x + row][i->y + col] == -1 || (cp[i->x + row][i->y + col] == n)) {
+										for (auto k = c[n].begin(); k != c[n].end(); k++) {
+											cp[k->x][k->y] = -1;
+										}
+										for (auto k = c[n].begin(); k != c[n].end(); k++) {
+											cp[k->x + row][k->y + col] = n;
+										}
+										
+										if (find(q.begin(), q.end(), cp) == q.end()) {
+											q.push_back(cp);
+											p.insert({ cp,g });
+										}
+									}
+											
+								}
+							}
+						}
+					}
+				}
+			}
 
 	}
 	
 }
 
-graph rmove(graph g, coordinate b, int a) {
-}
-
-graph cmove(graph g, coordinate b, int a) {
-
-}
-
-void bfs(deque<string>&q, const graph& g, map<string,string>& p /*predecessor*/) {
-	string str = encode(g);
-	graph cp = g;
-	q.push_back(str);
-	while (!q.empty())
+void bfs(deque<graph>& q, const graph& g, map<int, vector<coordinate>>& c, set<int>& n, map<graph, graph>& p/*child, parent*/) {
+	q.clear();
+	p.clear();
+	q.push_back(g);
+	graph temp;
+	printG(g);
+	while (!q.empty()) 
 	{
-		edecode(cp, q.front());
-		q.pop_front();
-		if (goal(cp)) {
-			//successor of goal graph is "goal"
-			break;
+		temp = q.front();
+		if (goal(temp)) {
+			graph mark(0);
+			p.insert({ mark,temp });
 		}
-		//moveBlock(q,cp,p);
+		q.pop_front();
+
+		neighbor(temp, n);
+		mapG(temp, c);
 		
+		for (auto it = n.begin(); it != n.end(); it++) {
+			int counter = 0;
+			for (int i = 0; i < 8; i++) {
+				if (i > 4 && counter == 0) //stop if graph can't move up, down, left, right
+					break;
+				else {
+					direction dir = (direction)i;
+					move(temp, *it, dir, c, p, counter, q);
+				}
+				
+			}
+		}
 	}
+
 }
 
 
@@ -489,24 +550,18 @@ int main(int argc, char *argv[])
 	bool quit = false; /* set this to exit main loop. */
 	SDL_Event e;
 
-	graph g(5, vector<int>(4, -1));
-	graph temp = g;
-	deque<string> q; //store possible outcome of grapg
-	map<string, string> p;//predecessor
-	map<int, vector<coordinate>> c; //coordinate of each block
-	vector<int> n; //neighbor
-	//map<int,string> dic;//associate block# to string
-	//dic[-1] = " ";
-	//dic[0] = "0";
-	//dic[1] = "1";
-	//dic[2] = "2";
-	//dic[3] = "3";
-	//dic[4] = "4";
-	//dic[5] = "5";
-	//dic[6] = "6";
-	//dic[7] = "7";
-	//dic[8] = "8";
-	//dic[9] = "9";
+	graph g(5, vector<int>(4, -1)); //matrix stores configuration of graph
+	set<int> n; //store neighbor of the empty block for use of move block
+	map<int, vector<coordinate>> c; //record the cordinate and use for move block
+	deque<graph> q; //store all possible configuration of graph;
+	map<graph, graph> p; //for tracking parent of graph
+
+	initialG(g);
+	printG(g);
+	neighbor(g, n);
+	mapG(g, c);
+	bfs(q, g, c, n, p);
+	cout << '\n' << p.size() << '\n';
 
 	/* main loop: */
 	while(!quit) {
@@ -575,29 +630,6 @@ int main(int argc, char *argv[])
 		render();
 	}
 	printf("total frames rendered: %i\n",fcount);
-
-	
-	readGraph(g);
-	printGraph(g);
-	/*neighbor(g, neighbors);
-	for (auto i = neighbors.begin(); i != neighbors.end();i++) {
-		cout << i->first << ' ';
-		vector<coordinate> x = i->second;
-		for (auto j = x.begin(); j!= x.end();j++)
-			cout << '('<<j->r<<','<<j->c<<')';
-		cout << '\n';
-	}*/
-	/*string a = encode(g);
-	std::cout << "Follow this command: " << a<<'\n';
-	int x = 0;
-	temp[0][0] = 9;
-	for (int i = 0; i < 5; i++) {
-		for (int j = 0;j < 4; j++) {
-			temp[i][j] = decode(a[x]);
-			x++;
-		}
-	}
-	printGraph(temp);*/
 		
 	return 0;
 }
